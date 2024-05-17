@@ -1,0 +1,16 @@
+
+/* Estilos para los títulos */
+h1, h2, h3 {
+    color: #ff6600; /* Color naranja para los títulos */
+    font-weight: bold; /* Texto en negrita */
+}
+
+/* Estilos para los párrafos */
+p {
+    color: #6c757d; /* Color del texto secundario */
+}
+
+/* Estilos para los enlaces */
+ #naranja{
+    color: #ff6600; /* Color del enlace */
+}

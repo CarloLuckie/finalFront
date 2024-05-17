@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Messages</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="./index.html">Eclisse</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="./index.html">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./nosotros.html">Conócenos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./productos.html">Productos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./contacto.html">Contacto</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./login.html">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./messages.html">Messages</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2>Messages</h2>
+        <div id="messages"></div>
+
+        <h2>Create New Message</h2>
+        <form id="createMessageForm">
+            <div class="mb-3">
+                <label for="newName" class="form-label">Name</label>
+                <input type="text" class="form-control" id="newName" name="newName" required>
+            </div>
+            <div class="mb-3">
+                <label for="newEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="newEmail" name="newEmail" required>
+            </div>
+            <div class="mb-3">
+                <label for="newMessage" class="form-label">Message</label>
+                <textarea class="form-control" id="newMessage" name="newMessage" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/persianas', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const messagesDiv = document.getElementById('messages');
+                    messagesDiv.innerHTML = data.map(message => `
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">${message.name}</h5>
+                                <p class="card-text">${message.email}</p>
+                                <p class="card-text">${message.message}</p>
+                                <button class="btn btn-warning" onclick="editMessage('${message._id}')">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteMessage('${message._id}')">Delete</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    alert(`Failed to load messages: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+            }
+        });
+
+        async function editMessage(id) {
+            const newName = prompt('Enter new name:');
+            const newEmail = prompt('Enter new email:');
+            const newMessage = prompt('Enter new message:');
+
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`http://localhost:8000/api/persianas/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name: newName, email: newEmail, message: newMessage })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Message updated successfully');
+                    window.location.reload();
+                } else {
+                    alert(`Failed to update message: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+            }
+        }
+
+        async function deleteMessage(id) {
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`http://localhost:8000/api/persianas/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Message deleted successfully');
+                    window.location.reload();
+                } else {
+                    alert(`Failed to delete message: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+            }
+        }
+
+        document.getElementById('createMessageForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const newName = document.getElementById('newName').value;
+            const newEmail = document.getElementById('newEmail').value;
+            const newMessage = document.getElementById('newMessage').value;
+
+            try {
+                const response = await fetch('http://localhost:8000/api/persianas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: newName, email: newEmail, message: newMessage })
+                });
+
+                if (response.ok) {
+                    alert('Message created successfully');
+                    window.location.reload();
+                } else {
+                    const errorData = await response.json();
+                    alert(`Failed to create message: ${errorData.error}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
